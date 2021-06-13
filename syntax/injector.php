@@ -118,8 +118,12 @@ class syntax_plugin_issuetracker_injector extends DokuWiki_Syntax_Plugin
         if ($mode != 'xhtml') return false;
         //$renderer->nocache();
 
-        if (strlen($data['error'])) {
+       if (strlen($data['error'])) {
             $renderer->doc .= "<span class='warn'>ERROR: " . $data['error'] . "</span>";
+            return true;
+        }
+        if($data['data']!=null && !is_array($data['data']->issues)){
+            $renderer->doc .= "<span class='warn'>ERROR: bad response from remote host</span>";
             return true;
         }
         $renderer->doc .= "<div><table class='issuetracker'><thead><tr><td>Issue</td><td>Summary</td><td>Status</td><td>Assignee</td></tr></thead><tbody>";
