@@ -1,0 +1,20 @@
+table.issuetracker {
+    font-size: 0.8rem;
+}
+table.issuetracker > thead {
+    background: #CCC;
+    font-weight: bold;
+}
+table.issuetracker tr{
+    line-height: 1rem;
+    padding: 0 0.5rem;
+}
+table.issuetracker td{
+    padding: 0.3rem !important;
+}
+table.issuetracker > tbody > tr{
+    
+}
+table.issuetracker > tbody > tr:nth-child(odd){
+    background: #EEE;
+}

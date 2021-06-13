@@ -1,0 +1,6 @@
+base   issuetracker
+author Jack
+email  jack@jacks-it-lab.de
+date   2021-06-12
+name   Issue Tracker
+desc   This plugin displays issue tables of tracking platforms like JIRA, Gitlab etc.
