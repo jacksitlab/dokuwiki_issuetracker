@@ -41,7 +41,24 @@ content:
 
 
 
+## Example - Github
+
+your config in local.php:
+```
+$conf['plugin']['issuetracker']['id'][0] = 'MyGithub';
+$conf['plugin']['issuetracker']['type'][0] = 'github';
+$conf['plugin']['issuetracker']['url'][0] = 'https://api.github.com/repos/my-user-name-or-organization/my-repo/issues';
+$conf['plugin']['issuetracker']['apikey'][0] = '';
+```
+
+content:
+```
+{{issuetracker>MyGithub|?state=open|20}}
+```
+
+
 ## References
 
   * https://docs.atlassian.com/software/jira/docs/api/REST/7.6.1/#api/2/search-searchUsingSearchRequest
   * https://docs.gitlab.com/ee/api/issues.html#list-project-issues
+  * https://docs.github.com/en/rest/reference/issues#list-issues-assigned-to-the-authenticated-user
