@@ -36,5 +36,12 @@ $conf['plugin']['issuetracker']['apikey'][0] = 'your-private-access-token';
 
 content:
 ```
-{{issuetracker>MyGitlab|projects/37/issues?state=opened|20}}
+{{issuetracker>MyGitlab|projects/<my-project-id>/issues?state=opened|20}}
 ```
+
+
+
+## References
+
+  * https://docs.atlassian.com/software/jira/docs/api/REST/7.6.1/#api/2/search-searchUsingSearchRequest
+  * https://docs.gitlab.com/ee/api/issues.html#list-project-issues
