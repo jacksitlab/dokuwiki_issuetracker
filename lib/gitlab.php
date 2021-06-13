@@ -15,13 +15,13 @@ if (!class_exists('IssueTrackerGitlabImplementation')) {
         {
             $response = $this->doGet('/api/v4/'.$query);
             if($response == false || $response->code != 200){
-                return "bad response code ".$response->code;
+                throw new Exception("bad response code ".$response->code);
             }
-            $data = $this->mapData(json_decode($response->content));
+            $data = $this->mapData(json_decode($response->content), $size);
             $data->setPage($page);
             return $data;
         }
-        private function mapData($data)
+        private function mapData($data, $size)
         {
             $rdata = new IssueTrackerIssueData();
             if(is_array($data)){
@@ -33,6 +33,10 @@ if (!class_exists('IssueTrackerGitlabImplementation')) {
                         $item->assignee->name,
                         $item->title
                     );
+                    $size--;
+                    if($size<=0){
+                        break;
+                    }
                 }
                 $rdata->setSize(count($data));
             }
@@ -74,11 +78,5 @@ if (!class_exists('IssueTrackerGitlabImplementation')) {
             $res->content = $body;
             return $res;
         }
-        private function getTest($fn){
-            $res = new stdClass();
-            $res->code = 200;
-            $res->content = file_get_contents($fn);
-            return $res;
-        }       
     }
 }

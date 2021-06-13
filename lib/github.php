@@ -1,25 +1,19 @@
 <?php
 require_once(DOKU_INC . '/lib/plugins/issuetracker/lib/issueData.php');
-if (!class_exists('IssueTrackerJiraImplementation')) {
-    class IssueTrackerJiraImplementation
+if (!class_exists('IssueTrackerGithubImplementation')) {
+    class IssueTrackerGithubImplementation
     {
 
         private $url;
-        private $apikey;
-
-        public function __construct($url, $apikey)
+        private $token;
+        public function __construct($url, $token)
         {
             $this->url = $url;
-            $this->apikey = $apikey;
+            $this->token = $token;
         }
         public function loadData($query, $size, $page = 1)
         {
-            $payload = new stdClass();
-            $payload->jql=$query;
-            $payload->startAt = ($page-1)*$size;
-            $payload->maxResults = $size;
-            $payload->fields=[ "summary","status","assignee","status"];
-            $response = $this->doPost('/rest/api/2/search',$payload);
+            $response = $this->doGet($query);
             if($response == false || $response->code != 200){
                 throw new Exception("bad response code ".$response->code);
             }
@@ -30,38 +24,43 @@ if (!class_exists('IssueTrackerJiraImplementation')) {
         private function mapData($data, $size)
         {
             $rdata = new IssueTrackerIssueData();
-            foreach ($data->issues as $item) {
-                $rdata->addIssue(
-                    $item->key,
-                    $this->url . '/browse/' . $item->key,
-                    $item->fields->status->name,
-                    $item->fields->assignee->displayName,
-                    $item->fields->summary
-                );
-                $size--;
-                if($size<=0){
-                    break;
+            if(is_array($data)){
+                foreach ($data as $item) {
+                    $rdata->addIssue(
+                        '#'.$item->number,
+                        $item->html_url,
+                        $item->state,
+                        $item->assignee==null?"":$item->assignee->login,
+                        $item->title
+                    );
+                    $size--;
+                    if($size<=0){
+                        break;
+                    }
                 }
+                $rdata->setSize(count($data));
             }
-            $rdata->setSize($data->total);
+            else{
+                echo json_last_error();
+                echo json_last_error_msg();
+            }
             return $rdata;
         }
-        private function doPost($uri, $data)
+        private function doGET($uri)
         {
             $url = $this->url . $uri;
             $ch = curl_init();
             $options = [
                 CURLOPT_URL => $url,
+                CURLOPT_TIMEOUT => 5000,
                 CURLOPT_RETURNTRANSFER => 1,
                 CURLOPT_FOLLOWLOCATION => 1,
-                CURLOPT_POSTFIELDS => json_encode($data),
-                CURLOPT_AUTOREFERER => 1,
-                CURLOPT_TIMEOUT => 5000,
                 CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_0,
                 CURLOPT_HEADER => 1,
                 CURLOPT_HTTPHEADER => [
-                    'accept: application/json;q=0.8,application/signed-exchange;v=b3;q=0.9',
-                    'content-type: application/json'
+                    'accept: application/vnd.github.v3+json',
+                    'content-type: application/json',
+                    'user-agent: dokuwiki-plugin'
                 ]
             ];
             curl_setopt_array($ch, $options);

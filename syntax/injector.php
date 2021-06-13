@@ -4,12 +4,13 @@ if (!defined('DOKU_INC')) die();
 
 require_once(DOKU_INC . '/lib/plugins/issuetracker/lib/jira.php');
 require_once(DOKU_INC . '/lib/plugins/issuetracker/lib/gitlab.php');
+require_once(DOKU_INC . '/lib/plugins/issuetracker/lib/github.php');
 
 class syntax_plugin_issuetracker_injector extends DokuWiki_Syntax_Plugin
 {
     private static $OPENING_TAG = '{{issuetracker>';
     private static $CLOSING_TAG = '}}';
-    private static $DEFAULT_SIZE = 20;
+    private static $DEFAULT_SIZE = "20";
     /**
      * @return string Syntax mode type
      */
@@ -56,12 +57,11 @@ class syntax_plugin_issuetracker_injector extends DokuWiki_Syntax_Plugin
         $key = false;
         $errormessage = "";
         $conf = [];
-        $matches=explode('|',$config);
+        $matches = explode('|', $config);
         if (count($matches) > 1) {
             $id = $matches[0];
             $query = $matches[1];
-            
-            $size =count($matches) > 1?$matches[2]:self::$DEFAULT_SIZE;
+            $size = count($matches) > 2 ? $matches[2] : self::$DEFAULT_SIZE;
         } else {
             $errormessage .= "no id detected in " . $config . "\n";
         }
@@ -72,29 +72,24 @@ class syntax_plugin_issuetracker_injector extends DokuWiki_Syntax_Plugin
             $conf['url'] = $urls[$key];
             $conf['type'] = $types[$key];
             $conf['apikey'] = $apikeys[$key];
-            if($conf['type'] =='jira'){
-                $provider = new IssueTrackerJiraImplementation($conf['url']);
-            }
-            elseif($conf['type'] =='gitlab'){
+            if ($conf['type'] == 'jira') {
+                $provider = new IssueTrackerJiraImplementation($conf['url'], $conf['apikey']);
+            } elseif ($conf['type'] == 'gitlab') {
                 $provider = new IssueTrackerGitlabImplementation($conf['url'], $conf['apikey']);
+            }elseif ($conf['type'] == 'github') {
+                $provider = new IssueTrackerGithubImplementation($conf['url'], $conf['apikey']);
             }
         } else {
             $errormessage .= "id '" . $id . "'not configured\n";
         }
         if ($provider != null) {
-
             try {
-                $data = $provider->loadData($query, $size);
-                if(is_string($data)){
-                    $errormessage.=$data."\n";
-                    $data=null;
-                }
+                $data = $provider->loadData($query, intval($size));
             } catch (Exception $e) {
                 $errormessage .= $e;
             }
-        }
-        else{
-            $errormessage.="type '".$conf['type'].' is not implemented\n';
+        } else {
+            $errormessage .= "type '" . $conf['type'] . ' is not implemented\n';
         }
         return [
             'error' => $errormessage,
@@ -118,20 +113,20 @@ class syntax_plugin_issuetracker_injector extends DokuWiki_Syntax_Plugin
         if ($mode != 'xhtml') return false;
         //$renderer->nocache();
 
-       if (strlen($data['error'])) {
+        if (strlen($data['error'])) {
             $renderer->doc .= "<span class='warn'>ERROR: " . $data['error'] . "</span>";
             return true;
         }
-        if($data['data']!=null && !is_array($data['data']->issues)){
+        if ($data['data'] != null && !is_array($data['data']->issues)) {
             $renderer->doc .= "<span class='warn'>ERROR: bad response from remote host</span>";
             return true;
         }
         $renderer->doc .= "<div><table class='issuetracker'><thead><tr><td>Issue</td><td>Summary</td><td>Status</td><td>Assignee</td></tr></thead><tbody>";
-        foreach($data['data']->issues as $issue) {
-            $renderer->doc .= '<tr><td><a href="'.$issue->url.'" target="_blank">'.$issue->key.'</a></td>'.
-            '<td>'.$issue->summary.'</td>'.
-            '<td>'.$issue->status.'</td>'.
-            '<td>'.$issue->assignee.'</td></tr>'; 
+        foreach ($data['data']->issues as $issue) {
+            $renderer->doc .= '<tr><td><a href="' . $issue->url . '" target="_blank">' . $issue->key . '</a></td>' .
+                '<td>' . $issue->summary . '</td>' .
+                '<td>' . $issue->status . '</td>' .
+                '<td>' . $issue->assignee . '</td></tr>';
         }
         $renderer->doc .= "</tbody></table></div>";
 
